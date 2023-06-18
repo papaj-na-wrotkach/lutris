@@ -77,7 +77,7 @@ class GameListView(Gtk.TreeView, GameView):
 
         banners = [Path(self.service_media.dest_path) / (self.service_media.file_pattern % game['slug']) for game in get_games()]
         banners = [GdkPixbuf.Pixbuf.new_from_file(str(banner)) for banner in banners if banner.exists()]
-        max_size = reduce(lambda a, b: a if (a[0] / a[1]) > (b[0] / b[1]) else b, [(banner.get_width(), banner.get_height()) for banner in banners])
+        max_size = reduce(lambda a, b: a if (a[0] / a[1]) > (b[0] / b[1]) else b, [(banner.get_width(), banner.get_height()) for banner in banners]) if banners else None
         size = (max_size[0] * self.service_media.size[1] / max_size[1], self.service_media.size[1]) if max_size else self.service_media.size
 
         if self.image_renderer:
