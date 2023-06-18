@@ -1,12 +1,15 @@
 """TreeView based game list"""
 from gettext import gettext as _
+from functools import reduce
+from pathlib import Path
 
 # Third Party Libraries
 # pylint: disable=no-member
-from gi.repository import Gdk, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, Gtk, Pango
 
 # Lutris Modules
 from lutris import settings
+from lutris.database.games import get_games
 from lutris.gui.views import (
     COL_INSTALLED, COL_INSTALLED_AT, COL_INSTALLED_AT_TEXT, COL_LASTPLAYED, COL_LASTPLAYED_TEXT, COL_MEDIA_PATH,
     COL_NAME, COL_PLATFORM, COL_PLAYTIME, COL_PLAYTIME_TEXT, COL_RUNNER_HUMAN_NAME, COL_YEAR, COLUMN_NAMES
@@ -35,7 +38,7 @@ class GameListView(Gtk.TreeView, GameView):
                                                    is_installed=COL_INSTALLED)
             self.media_column.set_reorderable(True)
             self.media_column.set_sort_indicator(False)
-            # self.media_column.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
+            self.media_column.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
             self.append_column(self.media_column)
         else:
             self.image_renderer = None
@@ -71,7 +74,11 @@ class GameListView(Gtk.TreeView, GameView):
         self.model = game_store.store
         self.set_model(self.model)
 
-        size = game_store.service_media.size
+
+        banners = [Path(self.service_media.dest_path) / (self.service_media.file_pattern % game['slug']) for game in get_games()]
+        banners = [GdkPixbuf.Pixbuf.new_from_file(str(banner)) for banner in banners if banner.exists()]
+        max_size = reduce(lambda a, b: a if (a[0] / a[1]) > (b[0] / b[1]) else b, [(banner.get_width(), banner.get_height()) for banner in banners])
+        size = (max_size[0] * self.service_media.size[1] / max_size[1], self.service_media.size[1]) if max_size else self.service_media.size
 
         if self.image_renderer:
             self.image_renderer.media_width = size[0]
