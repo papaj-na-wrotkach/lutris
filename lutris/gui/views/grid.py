@@ -1,8 +1,11 @@
 """Grid view for the main window"""
 # pylint: disable=no-member
-from gi.repository import Gtk
+from functools import reduce
+from pathlib import Path
+from gi.repository import GdkPixbuf, Gtk
 
 from lutris import settings
+from lutris.database.games import get_games
 from lutris.gui.views import COL_ID, COL_INSTALLED, COL_MEDIA_PATH, COL_NAME, COL_PLATFORM
 from lutris.gui.views.base import GameView
 from lutris.gui.widgets.cellrenderers import GridViewCellRendererImage, GridViewCellRendererText
@@ -50,7 +53,10 @@ class GameGridView(Gtk.IconView, GameView):
         self.model = game_store.store
         self.set_model(self.model)
 
-        size = game_store.service_media.size
+        images = [Path(self.service_media.dest_path) / (self.service_media.file_pattern % game['slug']) for game in get_games()]
+        images = [GdkPixbuf.Pixbuf.new_from_file(str(image)) for image in images if image.exists()]
+        max_size = reduce(lambda a, b: a if (a[0] / a[1]) > (b[0] / b[1]) else b, [(image.get_width(), image.get_height()) for image in images]) if images else None
+        size = (max_size[0] * self.service_media.size[1] / max_size[1], self.service_media.size[1]) if max_size else self.service_media.size
 
         if self.image_renderer:
             self.image_renderer.media_width = size[0]

@@ -39,7 +39,6 @@ if not os.path.exists(BANNER_PATH):
 COVERART_PATH = os.path.join(CACHE_DIR, "coverart")
 if not os.path.exists(COVERART_PATH):
     COVERART_PATH = os.path.join(DATA_DIR, "coverart")
-
 RUNTIME_VERSIONS_PATH = os.path.join(CACHE_DIR, "versions.json")
 ICON_PATH = os.path.join(GLib.get_user_data_dir(), "icons", "hicolor", "128x128", "apps")
 

@@ -1,12 +1,15 @@
 """TreeView based game list"""
+from functools import reduce
+from pathlib import Path
 from gettext import gettext as _
 
 # Third Party Libraries
 # pylint: disable=no-member
-from gi.repository import Gdk, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, Gtk, Pango
 
 # Lutris Modules
 from lutris import settings
+from lutris.database.games import get_games
 from lutris.gui.views import (
     COL_ID, COL_INSTALLED, COL_INSTALLED_AT, COL_INSTALLED_AT_TEXT, COL_LASTPLAYED, COL_LASTPLAYED_TEXT, COL_MEDIA_PATH,
     COL_NAME, COL_PLATFORM, COL_PLAYTIME, COL_PLAYTIME_TEXT, COL_RUNNER_HUMAN_NAME, COL_SORTNAME, COL_YEAR, COLUMN_NAMES
@@ -73,7 +76,10 @@ class GameListView(Gtk.TreeView, GameView):
         self.set_sort_with_column(COL_INSTALLED_AT_TEXT, COL_INSTALLED_AT)
         self.set_sort_with_column(COL_PLAYTIME_TEXT, COL_PLAYTIME)
 
-        size = game_store.service_media.size
+        images = [Path(self.service_media.dest_path) / (self.service_media.file_pattern % game['slug']) for game in get_games()]
+        images = [GdkPixbuf.Pixbuf.new_from_file(str(image)) for image in images if image.exists()]
+        max_size = reduce(lambda a, b: a if (a[0] / a[1]) > (b[0] / b[1]) else b, [(image.get_width(), image.get_height()) for image in images]) if images else None
+        size = (max_size[0] * self.service_media.size[1] / max_size[1], self.service_media.size[1]) if max_size else self.service_media.size
 
         if self.image_renderer:
             self.image_renderer.media_width = size[0]
